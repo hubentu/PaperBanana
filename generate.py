@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Single-sample PaperVizAgent entry point.
+Generate a single academic diagram or plot from text.
 
 Accepts diagram or plot inputs directly (no dataset JSON file).
 """

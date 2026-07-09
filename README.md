@@ -15,6 +15,7 @@ This repository forked the content of that repo and aims to keep evolving toward
 
 
 ## Latest News
+- **2026-07-09**: Added `generate.py` — single-sample CLI for generating a diagram/plot from text or a file (with optional `--ref_dir`, aspect ratio, and image size).
 - **2026-03-24**: PaperBanana is now [hosted on Hugging Face Spaces](https://huggingface.co/spaces/dwzhu/PaperBanana). Many thanks to the Hugging Face team for their support.
 - **2026-03-11**: Published PaperBanana as a [ClawHub skill](https://clawhub.ai/skills/paperbanana) — install with `clawhub install paperbanana`.
 - **2026-03-11**: Added model selection to Streamlit UI — now supports choosing both Main Model (VLM) and Image Generation Model, with preset options and custom input.
@@ -117,8 +118,55 @@ The web interface provides two main workflows:
 - Select resolution (2K/4K) and aspect ratio.
 - Download the refined high-resolution output.
 
-#### Option 3: Command-Line Interface
-You can also run PaperBanana from the command line:
+#### Option 3: Single-Sample CLI (`generate.py`)
+Generate one diagram or plot from text (or a text file) without a dataset JSON. Writes a result JSON and an image to the current folder by default.
+
+```bash
+# Diagram from inline text (no retrieval)
+python generate.py \
+  --task_name diagram \
+  --raw_text "Our method uses a two-stage encoder-decoder..." \
+  --caption_intent "Overview of the proposed architecture." \
+  --retrieval_setting none \
+  --aspect_ratio 16:9 \
+  --image_size 2k \
+  --output result.json \
+  --image_output result.png
+
+# Diagram from a file, with optional reference pool
+python generate.py \
+  --raw_file method_section.txt \
+  --caption_intent "Figure 1: System overview." \
+  --retrieval_setting auto \
+  --ref_dir data/PaperBananaBench/diagram \
+  --model_config configs/model_config.yaml
+
+# Plot from raw data + visual intent
+python generate.py \
+  --task_name plot \
+  --raw_text '{"x": [1,2,3], "y": [4,5,6]}' \
+  --caption_intent "Bar chart comparing accuracy across methods." \
+  --retrieval_setting none
+```
+
+**`generate.py` options:**
+- `--task_name`: `diagram` or `plot` (default: `diagram`)
+- `--raw_text` / `--raw_file`: methodology text (diagram) or raw plot data; one is required
+- `--caption_intent`: figure caption (diagram) or visual intent (plot); required
+- `--model_config`: path to `model_config.yaml` (default: `configs/model_config.yaml`)
+- `--exp_mode`: pipeline mode (default: `demo_full`; see Experiment Modes below)
+- `--retrieval_setting`: `auto`, `manual`, `random`, or `none` (default: `auto`)
+- `--ref_dir`: directory with `ref.json` and reference images (optional; defaults to `data/PaperBananaBench/{task}`; falls back to `none` if missing)
+- `--planner-metaphor`: enable diagram-only Planner visual-metaphor discovery
+- `--max_critic_rounds`: critic refinement rounds (default: `3`)
+- `--main_model_name` / `--image_gen_model_name`: override models from config
+- `--aspect_ratio`: e.g. `1:1`, `16:9`, `21:9` (default: `1:1`)
+- `--image_size`: `1k`, `2k`, or `4k` (default: `1k`)
+- `--output`: JSON path or directory (default: current folder → `{exp_name}.json`)
+- `--image_output`: image path (default: same stem as `--output` with `.jpg`)
+
+#### Option 4: Benchmark CLI (`main.py`)
+Batch-run PaperBananaBench splits from dataset JSON files:
 ```bash
 # Basic usage with default settings
 python main.py
@@ -140,7 +188,7 @@ python main.py \
   --retrieval_setting "none"
 ```
 
-**Available Options:**
+**`main.py` options:**
 - `--dataset_name`: Dataset to use (default: `PaperBananaBench`)
 - `--task_name`: Task type - `diagram` or `plot` (default: `diagram`)
 - `--split_name`: Dataset split (default: `test`)
@@ -215,7 +263,9 @@ streamlit run visualize/show_referenced_eval.py
 │   ├── PaperBananaBench_diagram/
 │   └── parallel_demo/
 ├── main.py
+├── generate.py
 ├── demo.py
+├── app.py
 └── README.md
 ```
 
