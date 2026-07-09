@@ -1,0 +1,39 @@
+# VCS / local env
+.git
+.gitignore
+.gitattributes
+.cache
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+
+# Tests
+tests/
+**/test_*.py
+**/*_test.py
+
+# Large / local data (mount at runtime if needed)
+results/
+
+# Local run artifacts in repo root
+/*.jpg
+/*.png
+/*.json
+0708_*
+
+# Demo / CWL job inputs (not needed in image)
+demo_raw.txt
+paperbanana.cwl
+paperbanana.yml
+model_config.yml
+configs/model_config.yaml
+
+# Docs / misc not needed at runtime
+README.md
+CONTRIBUTING.md
+LICENSE
+code-of-conduct.md
+.all-contributorsrc
+notebooks/

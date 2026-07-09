@@ -40,11 +40,15 @@ class ExpConfig:
     main_model_name: str = ""
     image_gen_model_name: str = ""
     work_dir: Path = Path(__file__).parent.parent
+    # Optional override for Retriever/Planner refs. None → data/PaperBananaBench/{task}.
+    ref_dir: Path | None = None
 
     timestamp: str | None = None
 
     def __post_init__(self):
         self.task_name = "plot" if is_plot_task(self.task_name) else "diagram"
+        if self.ref_dir is not None:
+            self.ref_dir = Path(self.ref_dir)
         os.environ["TZ"] = "America/Los_Angeles"  # set the timezone as you like
         if hasattr(time, "tzset"):
             time.tzset()  # Only available on Unix; no-op guard for Windows
@@ -79,6 +83,28 @@ class ExpConfig:
         )
         self.exp_name = f"{self.timestamp}_{self.retrieval_setting}ret_{self.exp_mode}_{self.split_name}"
 
-        # mkdir result_dir if not exists
+        # mkdir result_dir if not exists (skip on read-only FS, e.g. cwltool --read-only)
         self.result_dir = self.work_dir / "results" / f"{self.dataset_name}_{self.task_name}"
-        self.result_dir.mkdir(exist_ok=True, parents=True)
+        try:
+            self.result_dir.mkdir(exist_ok=True, parents=True)
+        except OSError as e:
+            # ponytail: CWL/docker --read-only can't create /app/results; callers use --output instead
+            print(f"Warning: could not create result_dir {self.result_dir}: {e}")
+
+    def resolve_ref_dir(self) -> Path:
+        """Directory with ref.json and reference images for Retriever/Planner."""
+        if self.ref_dir is not None:
+            return self.ref_dir
+        return self.work_dir / "data" / "PaperBananaBench" / self.task_name
+
+    def resolve_ref_json(self) -> Path:
+        return self.resolve_ref_dir() / "ref.json"
+
+    def resolve_manual_ref_json(self) -> Path:
+        return self.resolve_ref_dir() / "agent_selected_12.json"
+
+    def resolve_ref_image(self, path_to_gt_image: str) -> Path:
+        image_path = Path(path_to_gt_image)
+        if image_path.is_absolute():
+            return image_path
+        return self.resolve_ref_dir() / image_path

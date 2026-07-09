@@ -74,15 +74,14 @@ class RetrieverAgent(BaseAgent):
         cfg = self.task_config
         
         # Check if reference file exists to gracefully fallback if dataset isn't downloaded
-        import os
-        ref_file = self.exp_config.work_dir / f"data/PaperBananaBench/{cfg['task_name']}/ref.json"
+        ref_file = self.exp_config.resolve_ref_json()
         
         if retrieval_setting in ["auto", "random"] and not ref_file.exists():
             print(f"Warning: Reference file not found at {ref_file}. Falling back to retrieval_setting='none'.")
             retrieval_setting = "none"
         
         if retrieval_setting == "manual":
-            manual_file = self.exp_config.work_dir / f"data/PaperBananaBench/{cfg['task_name']}/agent_selected_12.json"
+            manual_file = self.exp_config.resolve_manual_ref_json()
             if not manual_file.exists():
                 print(f"Warning: Manual reference file not found at {manual_file}. Falling back to retrieval_setting='none'.")
                 retrieval_setting = "none"
@@ -117,7 +116,7 @@ class RetrieverAgent(BaseAgent):
         Returns: (list of IDs, list of full examples)
         """
         if cfg["task_name"] == "diagram":
-            few_shot_file = self.exp_config.work_dir / "data/PaperBananaBench/diagram/agent_selected_12.json"
+            few_shot_file = self.exp_config.resolve_manual_ref_json()
             with open(few_shot_file, "r", encoding="utf-8") as f:
                 examples = json.load(f)[:10]
             ids = [item["id"] for item in examples]
@@ -130,7 +129,7 @@ class RetrieverAgent(BaseAgent):
     
     def _load_random_references(self, cfg: dict) -> list:
         """Randomly sample references from reference pool"""
-        with open(self.exp_config.work_dir / f"data/PaperBananaBench/{cfg['task_name']}/ref.json", "r", encoding="utf-8") as f:
+        with open(self.exp_config.resolve_ref_json(), "r", encoding="utf-8") as f:
             candidate_pool = json.load(f)
         
         id_list = [item["id"] for item in candidate_pool]
@@ -145,7 +144,7 @@ class RetrieverAgent(BaseAgent):
         
         user_prompt = f"**Target Input**\n- {cfg['target_labels'][0]}: {visual_intent}\n- {cfg['target_labels'][1]}: {content}\n\n**Candidate Pool**\n"
         
-        with open(self.exp_config.work_dir / f"data/PaperBananaBench/{cfg['task_name']}/ref.json", "r", encoding="utf-8") as f:
+        with open(self.exp_config.resolve_ref_json(), "r", encoding="utf-8") as f:
             candidate_pool = json.load(f)
             if cfg["ref_limit"]:
                 candidate_pool = candidate_pool[:cfg["ref_limit"]]

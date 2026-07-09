@@ -74,7 +74,7 @@ class PlannerAgent(BaseAgent):
         if not examples:
             retrieved_ids = data.get("top10_references", [])
             if retrieved_ids:
-                with open(self.exp_config.work_dir / f"data/PaperBananaBench/{cfg['task_name']}/ref.json", "r", encoding="utf-8") as f:
+                with open(self.exp_config.resolve_ref_json(), "r", encoding="utf-8") as f:
                     candidate_pool = json.load(f)
                 id_to_item = {item["id"]: item for item in candidate_pool}
                 examples = [id_to_item[ref_id] for ref_id in retrieved_ids if ref_id in id_to_item]
@@ -91,8 +91,7 @@ class PlannerAgent(BaseAgent):
             user_prompt += f"{cfg['visual_intent_label']}: {item['visual_intent']}\nReference {cfg['task_name'].capitalize()}: "
             content_list.append({"type": "text", "text": user_prompt})
             
-            # Resolve relative path using work_dir
-            image_path = self.exp_config.work_dir / f"data/PaperBananaBench/{cfg['task_name']}" / item["path_to_gt_image"]
+            image_path = self.exp_config.resolve_ref_image(item["path_to_gt_image"])
             with open(image_path, "rb") as f:
                 ref_image_base64 = base64.b64encode(f.read()).decode("utf-8")
             content_list.append({"type": "image", "image_base64": ref_image_base64})
